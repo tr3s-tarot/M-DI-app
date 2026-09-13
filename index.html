@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>MÜDI</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#fbf7ee">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MÜDI">
+<style>
+  :root{
+    --cream:#fbf7ee;
+    --paper:#fffdf8;
+    --ink:#3b3a33;
+    --muted:#8a8577;
+    --gold:#c99a68;
+    --green:#7f9a72;
+    --lavender:#8a84ab;
+    --card-cream:#f7f1e4;
+    --card-green:#eef3ea;
+    --card-lav:#f1eef7;
+    --line:#e3dcc9;
+    --molestia:#c17b5a;
+    --ansiedad:#d1a441;
+    --tristeza:#7a93ab;
+    --cansancio:#a98f6b;
+    --calma:#7f9a72;
+    --felicidad:#c98a94;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--cream);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-tap-highlight-color:transparent;}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;padding-bottom:90px;}
+
+  /* header */
+  .topbar{position:sticky;top:0;z-index:20;background:var(--cream);
+    padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between;}
+  .brand{font-weight:800;font-size:22px;letter-spacing:0.5px;color:var(--ink);}
+  .brand span{color:var(--gold);}
+  .save-indicator{font-size:11px;color:var(--muted);opacity:0;transition:opacity .4s;}
+  .save-indicator.show{opacity:1;}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;padding:6px 16px 14px;position:sticky;top:48px;background:var(--cream);z-index:20;
+    overflow-x:auto;}
+  .tab{flex:1;text-align:center;padding:9px 4px;border-radius:20px;font-size:13px;font-weight:600;
+    color:var(--muted);background:var(--paper);border:1px solid var(--line);white-space:nowrap;}
+  .tab.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+
+  .page{display:none;padding:6px 16px 20px;}
+  .page.active{display:block;}
+
+  /* cards */
+  .card{border-radius:16px;padding:14px 14px 16px;margin-bottom:14px;}
+  .card.cream{background:var(--card-cream);}
+  .card.green{background:var(--card-green);}
+  .card.lav{background:var(--card-lav);}
+  .card-head{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;}
+  .card-title{font-weight:700;font-size:15px;}
+  .card-sub{font-size:11.5px;color:var(--lavender);margin:0 0 10px;}
+
+  /* editable lines */
+  .eline{width:100%;border:none;background:transparent;border-bottom:1px solid var(--line);
+    padding:7px 2px;font-size:14px;color:var(--ink);font-family:inherit;outline:none;}
+  .eline:focus{border-bottom:1px solid var(--gold);}
+  textarea.eline{resize:none;overflow:hidden;border-bottom:none;line-height:1.5;}
+  .lines-block .eline{margin-bottom:2px;}
+
+  /* mood row */
+  .moods{display:flex;justify-content:space-between;background:rgba(255,255,255,0.55);
+    border-radius:14px;padding:10px 6px;margin-top:10px;gap:2px;}
+  .mood{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:4px 2px;border-radius:10px;border:1px solid transparent;}
+  .mood svg{width:22px;height:22px;}
+  .mood span{font-size:9.5px;color:var(--muted);}
+  .mood.selected{background:rgba(255,255,255,0.9);border-color:currentColor;}
+  .mood.selected span{color:var(--ink);font-weight:700;}
+
+  /* checklist */
+  .check-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);}
+  .check-row:last-child{border-bottom:none;}
+  .checkdot{width:19px;height:19px;border-radius:50%;border:1.6px solid var(--green);flex:none;
+    display:flex;align-items:center;justify-content:center;}
+  .checkdot.done{background:var(--green);}
+  .checkdot.done::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--paper);}
+  .check-row input{flex:1;border:none;background:transparent;font-size:14px;color:var(--ink);
+    font-family:inherit;outline:none;}
+  .check-row.done input{color:var(--muted);text-decoration:line-through;}
+  .add-item{margin-top:6px;font-size:13px;color:var(--lavender);font-weight:700;padding:6px 2px;}
+
+  /* finance table */
+  .fin-row{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);min-width:0;}
+  .fin-row input{width:100%;min-width:0;box-sizing:border-box;border:none;background:transparent;font-size:13px;font-family:inherit;outline:none;color:var(--ink);}
+  .fin-head{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;font-weight:700;color:var(--lavender);
+    font-size:12.5px;padding-bottom:6px;}
+  .add-row{margin-top:8px;font-size:13px;color:var(--lavender);font-weight:700;}
+
+  .curr-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;padding:5px 0;}
+  .curr-row > div{min-width:0;}
+  .curr-row input{width:100%;min-width:0;box-sizing:border-box;border:none;border-bottom:1px solid var(--line);background:transparent;
+    font-size:11px;font-family:inherit;outline:none;padding:3px 0;color:var(--ink);}
+  .curr-label{font-size:7.6px;color:var(--muted);display:block;margin-bottom:1px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;}
+  .curr-group{padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid rgba(59,58,51,0.12);}
+  .curr-group:last-child{border-bottom:none;margin-bottom:0;}
+
+  /* extras image tiles */
+  .extras-grid{display:flex;gap:10px;margin-top:8px;}
+  .tile{flex:1;aspect-ratio:3/4;border-radius:12px;background:rgba(255,255,255,0.55);
+    border:1.5px dashed #cfc7ad;display:flex;align-items:center;justify-content:center;
+    background-size:cover;background-position:center;position:relative;overflow:hidden;}
+  .tile .plus{font-size:26px;color:#cbbf9d;}
+  .tile .remove{position:absolute;top:5px;right:5px;background:rgba(59,58,51,0.65);color:#fff;
+    border-radius:50%;width:20px;height:20px;font-size:12px;display:flex;align-items:center;justify-content:center;}
+
+  /* semana */
+  .week-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px;}
+  .week-wrap::-webkit-scrollbar{height:7px;}
+  .week-wrap::-webkit-scrollbar-track{background:var(--card-cream);border-radius:4px;}
+  .week-wrap::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px;}
+  .scroll-track{height:6px;background:var(--line);border-radius:3px;margin-top:10px;position:relative;overflow:hidden;}
+  .scroll-thumb{position:absolute;top:0;left:0;height:100%;background:var(--gold);border-radius:3px;
+    min-width:20%;transition:left .05s linear;}
+  .scroll-hint{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;
+    color:var(--muted);margin-top:4px;}
+  .week-grid{display:grid;grid-template-columns:48px repeat(7,66px);border:1px solid var(--line);
+    border-radius:10px;background:var(--paper);width:max-content;}
+  .week-grid > div{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:6px 5px;font-size:11px;min-height:38px;}
+  .week-grid .hh{background:var(--green);color:#fff;font-weight:700;text-align:center;font-size:11px;}
+  .week-grid .hourlab{background:var(--card-green);font-weight:700;color:var(--ink);display:flex;
+    align-items:center;justify-content:center;}
+  .week-grid input{border:none;background:transparent;width:100%;font-size:11px;font-family:inherit;outline:none;}
+  .week-grid .midweek{border-left:2px solid var(--gold);border-right:2px solid var(--gold);}
+  .week-grid .hh.midweek{background:#b98a53;}
+  .week-grid .block-end{border-bottom:2px solid var(--lavender) !important;}
+
+  /* mes */
+  .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .month-nav button{border:none;background:var(--card-cream);width:32px;height:32px;border-radius:50%;font-size:16px;color:var(--ink);}
+  .month-title{font-weight:700;font-size:15px;text-transform:capitalize;}
+
+  .action-row{display:flex;gap:8px;margin-top:12px;}
+  .action-btn{flex:1;border:1px solid var(--line);background:rgba(255,255,255,0.6);border-radius:10px;
+    padding:9px 6px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--ink);}
+  .action-btn:disabled{opacity:0.4;}
+  .action-btn.danger{width:100%;margin-top:8px;color:#a8453a;border-color:rgba(168,69,58,0.3);
+    background:rgba(255,255,255,0.4);}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;width:100%;}
+  .cal-dow{font-size:9px;color:var(--muted);text-align:center;font-weight:700;padding-bottom:4px;min-width:0;}
+  .cal-cell{background:var(--paper);border:1px solid var(--line);border-radius:6px;min-height:46px;
+    padding:3px;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+  .cal-cell.empty{background:transparent;border:none;}
+  .cal-num{font-size:9.5px;font-weight:700;color:var(--muted);}
+  .cal-cell textarea{flex:1;width:100%;max-width:100%;border:none;background:transparent;font-size:8px;
+    font-family:inherit;resize:none;outline:none;margin-top:1px;color:var(--ink);padding:0;
+    box-sizing:border-box;min-width:0;}
+  .month-notes{margin-top:12px;}
+  .month-notes textarea{width:100%;min-height:70px;border:1px solid var(--line);border-radius:10px;
+    background:var(--paper);padding:8px;font-family:inherit;font-size:13px;outline:none;}
+
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.5;margin:4px 4px 14px;}
+
+  .tracker-row{display:flex;gap:10px;margin-top:8px;}
+  .tracker-tile{flex:1;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.55);
+    border-radius:12px;padding:6px 10px;min-width:0;}
+  .tracker-icon{position:relative;width:22px;height:22px;flex:none;}
+  .tracker-icon svg{position:absolute;top:0;left:0;width:100%;height:100%;}
+  .tracker-label{font-size:11.5px;color:var(--muted);font-weight:600;flex:none;white-space:nowrap;}
+  .tracker-input{flex:1;min-width:0;width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--line);
+    background:transparent;font-family:inherit;font-weight:700;font-size:13px;outline:none;padding:2px 4px;}
+
+  .connect-row{display:flex;flex-direction:column;gap:8px;}
+  .connect-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:rgba(255,255,255,0.65);border:1px solid rgba(59,58,51,0.12);border-radius:12px;
+    padding:11px 12px;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--ink);}
+  .connect-btn:active{background:rgba(255,255,255,0.95);}
+  .connect-btn .c-ico{font-size:16px;}
+
+  .date-nav{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .date-nav #fecha{flex:1;min-width:0;}
+  .day-arrow{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+    background:var(--paper);font-size:16px;color:var(--ink);display:flex;align-items:center;justify-content:center;}
+  .pdf-btn{color:var(--lavender);font-size:15px;}
+  .recent-days{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;-webkit-overflow-scrolling:touch;}
+  .day-chip{flex:none;font-size:11px;font-weight:600;color:var(--muted);background:var(--paper);
+    border:1px solid var(--line);border-radius:12px;padding:5px 10px;white-space:nowrap;}
+  .day-chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .print-only-date{display:none;}
+
+  .pdf-modal{position:fixed;inset:0;background:rgba(59,58,51,0.45);display:none;
+    align-items:center;justify-content:center;z-index:200;padding:20px;}
+  .pdf-modal.show{display:flex;}
+  .pdf-modal-card{background:var(--paper);border-radius:16px;padding:18px;width:100%;max-width:320px;}
+  .pdf-modal-title{font-weight:700;font-size:14.5px;margin-bottom:12px;}
+  .pdf-check-row{display:flex;align-items:center;gap:10px;padding:8px 2px;font-size:14px;color:var(--ink);}
+  .pdf-check-row input{width:17px;height:17px;accent-color:var(--lavender);}
+  .pdf-modal-actions{display:flex;gap:8px;margin-top:14px;}
+  .pdf-modal-btn{flex:1;border:none;border-radius:10px;padding:10px;font-family:inherit;font-weight:700;
+    font-size:13.5px;background:var(--ink);color:var(--paper);}
+  .pdf-modal-btn.ghost{background:var(--card-cream);color:var(--ink);}
+
+  @media print{
+    body{background:#fff;}
+    .topbar{position:static;}
+    .tabs, .hint, #recentDays, .day-arrow{display:none !important;}
+    .print-only-date{display:block !important;font-size:13px;font-weight:700;color:var(--ink);}
+    .page{display:none !important;}
+    .page.print-show{display:block !important;padding:0 4px;page-break-after:always;}
+    .page.print-show:last-of-type{page-break-after:auto;}
+    .card{break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    input, textarea{border-color:transparent !important;}
+    .connect-row, .add-item, .add-row, #fecha{display:none !important;}
+    .save-indicator{display:none !important;}
+    .card.lav:has(#btnCalendar){display:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">M<span>Ü</span>DI</div>
+    <div class="save-indicator" id="saveInd">Guardado ✓</div>
+    <div class="print-only-date" id="printDateLabel"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-page="hoy">Mi MÜDI</div>
+    <div class="tab" data-page="fin">Organización</div>
+    <div class="tab" data-page="sem">Semana</div>
+    <div class="tab" data-page="mes">Mes</div>
+  </div>
+
+  <p class="hint" style="padding:0 16px;margin-bottom:2px;">Toca cualquier línea o celda para escribir. Todo se guarda solo.</p>
+  <p class="hint" style="padding:0 16px;opacity:0.55;margin-top:0;">versión 15 · funciona también fuera de Claude (guarda en el navegador)</p>
+
+  <!-- ================= PAGINA HOY ================= -->
+  <div class="page active" id="page-hoy">
+
+    <div class="date-nav">
+      <button id="prevDay" class="day-arrow">‹</button>
+      <input type="date" class="eline" id="fecha" style="border:1px solid var(--line);border-radius:10px;padding:8px 10px;">
+      <button id="nextDay" class="day-arrow">›</button>
+      <button id="btnPdf" class="day-arrow pdf-btn" title="Descargar como PDF">
+        <svg viewBox="0 0 24 24" width="17" height="17"><path d="M12,3 V15 M7,10 L12,15 L17,10" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M4,18 V19.5 A1.5,1.5 0 0 0 5.5,21 H18.5 A1.5,1.5 0 0 0 20,19.5 V18" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="recent-days" id="recentDays"></div>
+
+    <div class="card cream" data-mood-section="ayer">
+      <div class="card-head"><span class="card-title">Ayer…</span></div>
+      <p class="card-sub">(Resumen del día anterior)</p>
+      <textarea class="eline" rows="2" data-key="ayer_txt" placeholder="¿Cómo estuvo tu día de ayer?"></textarea>
+      <div class="moods" data-group="ayer"></div><p style="font-size:10px;color:var(--muted);margin:4px 2px 0;">Podés elegir más de una emoción</p>
+      <div class="tracker-row">
+        <div class="tracker-tile">
+          <div class="tracker-icon">
+            <svg viewBox="0 0 24 24"><path d="M12,2 C12,2 5,11.2 5,15.8 C5,19.8 8.1,22 12,22 C15.9,22 19,19.8 19,15.8 C19,11.2 12,2 12,2 Z" fill="none" stroke="#c0524a" stroke-width="1.5"/></svg>
+          </div>
+          <span class="tracker-label">Ciclo:</span>
+          <input class="tracker-input" style="color:#c0524a;" type="text" inputmode="numeric" maxlength="1" data-key="ciclo_ayer">
+        </div>
+        <div class="tracker-tile">
+          <div class="tracker-icon pill-icon">
+            <svg viewBox="0 0 24 24"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" fill="none" stroke="#3f6fa0" stroke-width="1.5"/><line x1="12" y1="8.5" x2="12" y2="15.5" stroke="#3f6fa0" stroke-width="1.5"/></svg>
+          </div>
+          <span class="tracker-label">Tomé:</span>
+          <input class="tracker-input" style="color:#3f6fa0;" type="text" maxlength="6" data-key="tome_ayer">
+        </div>
+      </div>
+    </div>
+
+    <div class="card green" data-mood-section="empiezo">
+      <div class="card-head"><span class="card-title">Hoy empiezo…</span></div>
+      <p class="card-sub">(Cómo me siento al comenzar el día y planes hoy)</p>
+      <textarea class="eline" rows="3" data-key="empiezo_txt" placeholder="Escribe aquí"></textarea>
+      <div class="moods" data-group="empiezo"></div><p style="font-size:10px;color:var(--muted);margin:4px 2px 0;">Podés elegir más de una emoción</p>
+      <div class="tracker-row">
+        <div class="tracker-tile">
+          <div class="tracker-icon">
+            <svg viewBox="0 0 24 24"><path d="M12,2 C12,2 5,11.2 5,15.8 C5,19.8 8.1,22 12,22 C15.9,22 19,19.8 19,15.8 C19,11.2 12,2 12,2 Z" fill="none" stroke="#c0524a" stroke-width="1.5"/></svg>
+          </div>
+          <span class="tracker-label">Ciclo:</span>
+          <input class="tracker-input" style="color:#c0524a;" type="text" inputmode="numeric" maxlength="1" data-key="ciclo_empiezo">
+        </div>
+        <div class="tracker-tile">
+          <div class="tracker-icon pill-icon">
+            <svg viewBox="0 0 24 24"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" fill="none" stroke="#3f6fa0" stroke-width="1.5"/><line x1="12" y1="8.5" x2="12" y2="15.5" stroke="#3f6fa0" stroke-width="1.5"/></svg>
+          </div>
+          <span class="tracker-label">Tomé:</span>
+          <input class="tracker-input" style="color:#3f6fa0;" type="text" maxlength="6" data-key="tome_empiezo">
+        </div>
+      </div>
+    </div>
+
+    <div class="card lav" data-mood-section="termino">
+      <div class="card-head"><span class="card-title">Hoy terminé…</span></div>
+      <p class="card-sub">(Cómo me siento al terminar el día y planes mañana)</p>
+      <textarea class="eline" rows="3" data-key="termino_txt" placeholder="Escribe aquí"></textarea>
+      <div class="moods" data-group="termino"></div><p style="font-size:10px;color:var(--muted);margin:4px 2px 0;">Podés elegir más de una emoción</p>
+    </div>
+
+    <div class="card cream">
+      <div class="card-head"><span class="card-title">Notas</span></div>
+      <textarea class="eline" rows="4" data-key="notas_dia" placeholder="Ideas, pensamientos, lo que sea…"></textarea>
+    </div>
+
+    <div class="card green">
+      <div class="card-head"><span class="card-title">Checklist</span></div>
+      <div id="checklist"></div>
+      <div class="add-item" id="addItem">+ agregar línea</div>
+    </div>
+
+    <div class="card lav">
+      <div class="card-head"><span class="card-title">Conectar</span></div>
+      <p class="card-sub" style="margin-bottom:10px;">Lleva lo de hoy a otras apps de tu celular</p>
+      <div class="connect-row">
+        <button class="connect-btn" id="btnCalendar"><span class="c-ico">📅</span>Google Calendar</button>
+        <button class="connect-btn" id="btnMaps"><span class="c-ico">📍</span>Google Maps</button>
+        <button class="connect-btn" id="btnShare"><span class="c-ico">📤</span>Compartir</button>
+        <button class="connect-btn" id="btnPdf2"><span class="c-ico">🖨️</span>Descargar como PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PAGINA FINANZAS ================= -->
+  <div class="page" id="page-fin">
+
+    <div class="card cream">
+      <div class="card-head"><span class="card-title">Gastos e ingresos</span></div>
+      <div class="fin-head"><div>Concepto</div><div>Ingreso</div><div>Gasto</div></div>
+      <div id="finRows"></div>
+      <div class="add-row" id="addFinRow">+ agregar fila</div>
+    </div>
+
+    <div class="card lav">
+      <div class="card-head"><span class="card-title">Cambio de moneda</span></div>
+      <div class="curr-row">
+        <div><span class="curr-label">De (moneda)</span><input data-key="c1_de"></div>
+        <div><span class="curr-label">Monto</span><input data-key="c1_monto"></div>
+        <div><span class="curr-label">A (moneda)</span><input data-key="c1_a"></div>
+        <div><span class="curr-label">Tasa</span><input data-key="c1_tasa"></div>
+        <div><span class="curr-label">Total</span><input data-key="c1_total"></div>
+      </div>
+    </div>
+
+    <div class="card green">
+      <div class="card-head"><span class="card-title">Notas</span></div>
+      <textarea class="eline" rows="4" data-key="notas_fin" placeholder="Escribe aquí algo"></textarea>
+    </div>
+
+    <div class="card cream">
+      <div class="card-head"><span class="card-title">Extras</span></div>
+      <p class="hint" style="margin:0 0 4px;">Toca un recuadro para agregar una foto.</p>
+      <div class="extras-grid" id="extrasGrid"></div>
+    </div>
+  </div>
+
+  <!-- ================= PAGINA SEMANA ================= -->
+  <div class="page" id="page-sem">
+    <div class="card cream">
+      <div class="card-head"><span class="card-title">Semana</span></div>
+      <p class="card-sub" style="margin-bottom:8px;">El borde dorado marca jueves, la mitad de la semana · las líneas moradas separan bloques de 3 horas</p>
+      <div class="week-wrap" id="weekWrap"><div class="week-grid" id="weekGrid"></div></div>
+      <div class="scroll-track"><div class="scroll-thumb" id="weekScrollThumb"></div></div>
+      <div class="scroll-hint">⟵ desliza para ver todos los días ⟶</div>
+      <div class="action-row">
+        <button id="weekUndo" class="action-btn">↩ Deshacer</button>
+        <button id="weekRedo" class="action-btn">↪ Rehacer</button>
+      </div>
+      <button id="weekClear" class="action-btn danger">🗑 Borrar contenido semanal</button>
+    </div>
+  </div>
+
+  <!-- ================= PAGINA MES ================= -->
+  <div class="page" id="page-mes">
+    <div class="card cream">
+      <div class="month-nav">
+        <button id="prevMonth">‹</button>
+        <div class="month-title" id="monthTitle">-</div>
+        <button id="nextMonth">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="month-notes">
+        <div class="card-title" style="font-size:13px;margin-bottom:4px;">Notas del mes</div>
+        <textarea id="notasMesField" data-key="notas_mes"></textarea>
+      </div>
+      <div class="action-row">
+        <button id="monthUndo" class="action-btn">↩ Deshacer</button>
+        <button id="monthRedo" class="action-btn">↪ Rehacer</button>
+      </div>
+      <button id="monthClear" class="action-btn danger">🗑 Borrar contenido del mes</button>
+    </div>
+  </div>
+
+</div>
+
+<input type="file" id="fileInput" accept="image/*" style="display:none;">
+
+<div class="pdf-modal" id="pdfModal">
+  <div class="pdf-modal-card">
+    <div class="pdf-modal-title">¿Qué secciones querés descargar?</div>
+    <label class="pdf-check-row"><input type="checkbox" value="hoy" checked> Mi MÜDI</label>
+    <label class="pdf-check-row"><input type="checkbox" value="fin" checked> Organización</label>
+    <label class="pdf-check-row"><input type="checkbox" value="sem" checked> Semana</label>
+    <label class="pdf-check-row"><input type="checkbox" value="mes" checked> Mes</label>
+    <div class="pdf-modal-actions">
+      <button id="pdfCancel" class="pdf-modal-btn ghost">Cancelar</button>
+      <button id="pdfConfirm" class="pdf-modal-btn">Descargar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- almacenamiento ---------------- */
+// 3 modos, de mejor a peor, elegidos automáticamente según dónde se abra el archivo:
+//  'claude' -> dentro de Claude (window.storage, sincroniza con tu cuenta)
+//  'local'  -> abierto suelto en un navegador normal (localStorage del propio celular/PC)
+//  'memory' -> último recurso: solo dura mientras la pestaña está abierta
+let storageMode = 'memory';
+if(window.storage && window.storage.get){
+  storageMode = 'claude';
+}else{
+  try{
+    localStorage.setItem('__mudi_test__','1');
+    localStorage.removeItem('__mudi_test__');
+    storageMode = 'local';
+  }catch(e){ storageMode = 'memory'; }
+}
+let memStore = {};
+let saveOk = true;
+const LS_PREFIX = 'mudi_';
+
+async function storageSetWithRetry(key, json){
+  try{ await window.storage.set(key, json); return true; }
+  catch(e){
+    try{ await window.storage.set(key, json); return true; } // 1 reintento
+    catch(e2){ return false; }
+  }
+}
+async function storageGetWithRetry(key){
+  try{ return await window.storage.get(key); }
+  catch(e){
+    try{ return await window.storage.get(key); } // 1 reintento
+    catch(e2){ return null; }
+  }
+}
+
+async function saveVal(key, value){
+  const json = JSON.stringify(value);
+  memStore[key] = json; // caché local: siempre queda una copia de respaldo en esta sesión
+  let ok = true;
+  if(storageMode==='claude'){
+    ok = await storageSetWithRetry(key, json);
+  } else if(storageMode==='local'){
+    try{ localStorage.setItem(LS_PREFIX+key, json); }catch(e){ ok = false; }
+  }
+  saveOk = ok;
+  flashSaved(ok);
+  return ok;
+}
+async function loadVal(key, fallback){
+  if(storageMode==='claude'){
+    const r = await storageGetWithRetry(key);
+    if(r && r.value!=null){
+      memStore[key] = r.value; // refrescar caché local
+      try{ return JSON.parse(r.value); }catch(e){ /* sigue abajo */ }
+    }
+  } else if(storageMode==='local'){
+    try{
+      const v = localStorage.getItem(LS_PREFIX+key);
+      if(v!=null){ memStore[key]=v; return JSON.parse(v); }
+    }catch(e){ /* sigue abajo */ }
+  }
+  // si el almacenamiento real falló o no existe, usar la última copia local conocida
+  if(memStore[key]!=null){
+    try{ return JSON.parse(memStore[key]); }catch(e){ return fallback; }
+  }
+  return fallback;
+}
+let saveTimer=null;
+function flashSaved(ok=true){
+  const el = document.getElementById('saveInd');
+  el.textContent = ok ? 'Guardado ✓' : '⚠️ No se pudo guardar';
+  el.style.color = ok ? '' : '#a8453a';
+  el.classList.add('show');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>el.classList.remove('show'), 900);
+}
+function debounce(fn, ms){
+  let t=null;
+  return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); };
+}
+/* debounce POR CLAVE: cada campo tiene su propio temporizador, así escribir en
+   un campo (ej. un día de septiembre) nunca cancela el guardado pendiente de otro. */
+const pendingTimers = {};
+const pendingValues = {};
+function saveDebounced(key, value){
+  pendingValues[key] = value;
+  clearTimeout(pendingTimers[key]);
+  pendingTimers[key] = setTimeout(async ()=>{
+    delete pendingTimers[key];
+    const v = pendingValues[key];
+    delete pendingValues[key];
+    await saveVal(key, v);
+  }, 350);
+}
+/* Guarda YA cualquier cambio pendiente. Se llama antes de navegar (cambiar de mes,
+   de semana, de día) para que nunca se pierda lo último que se escribió. */
+async function flushAllPending(){
+  const keys = Object.keys(pendingTimers);
+  for(const key of keys){
+    clearTimeout(pendingTimers[key]);
+    delete pendingTimers[key];
+    const v = pendingValues[key];
+    delete pendingValues[key];
+    await saveVal(key, v);
+  }
+  Object.keys(historyTimers).forEach(k=>{
+    clearTimeout(historyTimers[k]);
+    delete historyTimers[k];
+  });
+}
+window.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushAllPending(); });
+window.addEventListener('pagehide', flushAllPending);
+
+const historyTimers = {};
+function scheduleHistoryPush(key, fn, ms=600){
+  clearTimeout(historyTimers[key]);
+  historyTimers[key] = setTimeout(fn, ms);
+}
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-'+tab.dataset.page).classList.add('active');
+  });
+});
+
+/* ---------------- generic editable fields (input/textarea with data-key) ---------------- */
+function autoGrow(ta){
+  ta.style.height='auto';
+  ta.style.height=(ta.scrollHeight)+'px';
+}
+async function initField(el){
+  const key = el.dataset.key;
+  const val = await loadVal(key, '');
+  el.value = val || '';
+  if(el.tagName==='TEXTAREA') autoGrow(el);
+  el.addEventListener('input', ()=>{
+    if(el.tagName==='TEXTAREA') autoGrow(el);
+    saveDebounced(key, el.value);
+  });
+}
+function bindAllFields(root){
+  root.querySelectorAll('[data-key]').forEach(initField);
+}
+
+/* ---------------- campos DIARIOS: una entrada distinta por cada fecha ---------------- */
+let currentDate = null;
+function dkey(base){ return 'd_'+currentDate+'_'+base; }
+async function markDateAsUsed(dateStr){
+  const list = await loadVal('all_daily_dates', []);
+  if(!list.includes(dateStr)){
+    list.push(dateStr);
+    list.sort();
+    await saveVal('all_daily_dates', list);
+    buildRecentDaysChips();
+  }
+}
+async function loadDailyField(el){
+  const key = dkey(el.dataset.key);
+  const val = await loadVal(key, '');
+  el.value = val || '';
+  if(el.tagName==='TEXTAREA') autoGrow(el);
+}
+function bindDailyField(el){
+  el.addEventListener('input', ()=>{
+    if(el.tagName==='TEXTAREA') autoGrow(el);
+    saveDebounced(dkey(el.dataset.key), el.value);
+    markDateAsUsed(currentDate);
+  });
+}
+async function initDailyField(el){
+  bindDailyField(el);
+  await loadDailyField(el);
+}
+function bindDailyFields(root){
+  root.querySelectorAll('[data-key]').forEach(initDailyField);
+}
+async function reloadDailyFields(root){
+  for(const el of root.querySelectorAll('[data-key]')) await loadDailyField(el);
+}
+async function buildRecentDaysChips(){
+  const wrap = document.getElementById('recentDays');
+  if(!wrap) return;
+  const list = (await loadVal('all_daily_dates', [])).slice().sort().reverse().slice(0,14);
+  wrap.innerHTML = list.map(d=>{
+    const short = d.slice(5).split('-').reverse().join('/');
+    return `<div class="day-chip ${d===currentDate?'active':''}" data-date="${d}">${short}</div>`;
+  }).join('');
+  wrap.querySelectorAll('.day-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>switchToDate(chip.dataset.date));
+  });
+}
+async function switchToDate(dateStr){
+  await flushAllPending();
+  currentDate = dateStr;
+  document.getElementById('fecha').value = dateStr;
+  await reloadDailyFields(document.getElementById('page-hoy'));
+  await buildMoodRow(document.querySelector('.moods[data-group="ayer"]'), 'ayer');
+  await buildMoodRow(document.querySelector('.moods[data-group="empiezo"]'), 'empiezo');
+  await buildMoodRow(document.querySelector('.moods[data-group="termino"]'), 'termino');
+  await buildChecklist();
+  await buildRecentDaysChips();
+}
+function shiftDate(days){
+  const d = new Date(currentDate+'T00:00:00');
+  d.setDate(d.getDate()+days);
+  switchToDate(d.toISOString().slice(0,10));
+}
+
+/* ---------------- moods ---------------- */
+const MOODS = [
+  {name:'Molestia', color:'var(--molestia)', face:m=>`<circle cx="12" cy="12" r="9.5" stroke="${m}" stroke-width="1.3" fill="none"/><path d="M7,9.3 L10.2,11 M17,9.3 L13.8,11" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/><circle cx="9" cy="13" r="0.9" fill="${m}"/><circle cx="15" cy="13" r="0.9" fill="${m}"/><path d="M8.5,16.8 H15.5" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`},
+  {name:'Ansiedad', color:'var(--ansiedad)', face:m=>`<circle cx="12" cy="12" r="9.5" stroke="${m}" stroke-width="1.3" fill="none"/><path d="M6.5,10.8 L10,9.3 M17.5,10.8 L14,9.3" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/><circle cx="9" cy="13" r="0.9" fill="${m}"/><circle cx="15" cy="13" r="0.9" fill="${m}"/><path d="M8,16.5 L10,17.7 L12,16.5 L14,17.7 L16,16.5" stroke="${m}" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`},
+  {name:'Tristeza', color:'var(--tristeza)', face:m=>`<circle cx="12" cy="12" r="9.5" stroke="${m}" stroke-width="1.3" fill="none"/><circle cx="9" cy="12" r="0.9" fill="${m}"/><circle cx="15" cy="12" r="0.9" fill="${m}"/><path d="M8,17.3 Q12,14.8 16,17.3" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M7.4,13.6 q-1.1,1.7 0,2.7 q1.1,-1,0,-2.7" fill="${m}"/>`},
+  {name:'Cansancio', color:'var(--cansancio)', face:m=>`<circle cx="12" cy="12" r="9.5" stroke="${m}" stroke-width="1.3" fill="none"/><path d="M7.3,12.3 Q9.3,13.6 11.3,12.3 M12.7,12.3 Q14.7,13.6 16.7,12.3" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9.3,16.6 H14.7" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M18.3,6.3 H20.1 L18.3,8.1 H20.1" stroke="${m}" stroke-width="0.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`},
+  {name:'Calma', color:'var(--calma)', face:m=>`<circle cx="12" cy="12" r="9.5" stroke="${m}" stroke-width="1.3" fill="none"/><path d="M7.8,12.2 H10.2 M13.8,12.2 H16.2" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9,15.8 Q12,17.1 15,15.8" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`},
+  {name:'Felicidad', color:'var(--felicidad)', face:m=>`<circle cx="12" cy="12" r="9.5" stroke="${m}" stroke-width="1.3" fill="none"/><path d="M7.3,12.7 Q9.3,9.9 11.3,12.7 M12.7,12.7 Q14.7,9.9 16.7,12.7" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M7.5,14.7 Q12,20.2 16.5,14.7" stroke="${m}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`},
+];
+async function buildMoodRow(container, groupKey){
+  const selected = await loadVal(dkey('mood_'+groupKey), []);
+  const selectedArr = Array.isArray(selected) ? selected : (selected ? [selected] : []);
+  container.innerHTML = MOODS.map(m=>`
+    <div class="mood ${selectedArr.includes(m.name)?'selected':''}" data-name="${m.name}" style="color:${m.color}">
+      <svg viewBox="0 0 24 24">${m.face(m.color.replace('var(--','').replace(')','') ? getComputedColor(m.color) : m.color)}</svg>
+      <span>${m.name}</span>
+    </div>`).join('');
+  container.querySelectorAll('.mood').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const name = btn.dataset.name;
+      const idx = selectedArr.indexOf(name);
+      if(idx===-1){ selectedArr.push(name); btn.classList.add('selected'); }
+      else { selectedArr.splice(idx,1); btn.classList.remove('selected'); }
+      await saveVal(dkey('mood_'+groupKey), selectedArr); markDateAsUsed(currentDate);
+    });
+  });
+}
+function getComputedColor(varStr){
+  const name = varStr.replace('var(','').replace(')','');
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/* ---------------- checklist ---------------- */
+const CHECK_COUNT = 14;
+async function buildChecklist(){
+  const wrap = document.getElementById('checklist');
+  const items = await loadVal(dkey('checklist_items'), Array.from({length:CHECK_COUNT},()=>({text:'',done:false})));
+  wrap.innerHTML='';
+  items.forEach((it,i)=>{
+    const row = document.createElement('div');
+    row.className='check-row'+(it.done?' done':'');
+    row.innerHTML = `<div class="checkdot ${it.done?'done':''}"></div><input placeholder="Escribe algo…" value="${escapeHtml(it.text)}">`;
+    row.querySelector('.checkdot').addEventListener('click', async ()=>{
+      items[i].done = !items[i].done;
+      row.classList.toggle('done', items[i].done);
+      row.querySelector('.checkdot').classList.toggle('done', items[i].done);
+      await saveVal(dkey('checklist_items'), items); markDateAsUsed(currentDate);
+    });
+    row.querySelector('input').addEventListener('input', (e)=>{
+      items[i].text = e.target.value;
+      saveDebounced(dkey('checklist_items'), items);
+    });
+    wrap.appendChild(row);
+  });
+  document.getElementById('addItem').onclick = async ()=>{
+    items.push({text:'',done:false});
+    await saveVal(dkey('checklist_items'), items); markDateAsUsed(currentDate);
+    buildChecklist();
+  };
+}
+function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/* ---------------- finanzas: filas ---------------- */
+const FIN_ROWS_DEFAULT = 7;
+async function buildFinRows(){
+  const wrap = document.getElementById('finRows');
+  const rows = await loadVal('fin_rows', Array.from({length:FIN_ROWS_DEFAULT},()=>({c:'',i:'',g:''})));
+  wrap.innerHTML='';
+  rows.forEach((r,i)=>{
+    const div = document.createElement('div');
+    div.className='fin-row';
+    div.innerHTML = `<input placeholder="Concepto" value="${escapeHtml(r.c)}" data-f="c">
+                      <input placeholder="$" value="${escapeHtml(r.i)}" data-f="i">
+                      <input placeholder="$" value="${escapeHtml(r.g)}" data-f="g">`;
+    div.querySelectorAll('input').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        rows[i][inp.dataset.f] = inp.value;
+        saveDebounced('fin_rows', rows);
+      });
+    });
+    wrap.appendChild(div);
+  });
+  document.getElementById('addFinRow').onclick = async ()=>{
+    rows.push({c:'',i:'',g:''});
+    await saveVal('fin_rows', rows);
+    buildFinRows();
+  };
+}
+
+/* ---------------- extras: fotos ---------------- */
+let activeTileIndex = null;
+async function buildExtras(){
+  const grid = document.getElementById('extrasGrid');
+  grid.innerHTML='';
+  for(let i=0;i<3;i++){
+    const img = await loadVal('extra_img_'+i, null);
+    const tile = document.createElement('div');
+    tile.className='tile';
+    if(img){
+      tile.style.backgroundImage = `url(${img})`;
+      tile.innerHTML = `<div class="remove" data-i="${i}">×</div>`;
+    } else {
+      tile.innerHTML = `<div class="plus">+</div>`;
+    }
+    tile.addEventListener('click', (e)=>{
+      if(e.target.classList.contains('remove')){
+        e.stopPropagation();
+        saveVal('extra_img_'+i, null).then(buildExtras);
+        return;
+      }
+      activeTileIndex = i;
+      document.getElementById('fileInput').click();
+    });
+    grid.appendChild(tile);
+  }
+}
+document.getElementById('fileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file || activeTileIndex===null) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    const imgEl = new Image();
+    imgEl.onload = ()=>{
+      const maxW = 700;
+      const scale = Math.min(1, maxW/imgEl.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = imgEl.width*scale;
+      canvas.height = imgEl.height*scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgEl,0,0,canvas.width,canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg',0.72);
+      saveVal('extra_img_'+activeTileIndex, dataUrl).then(buildExtras);
+    };
+    imgEl.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+});
+
+/* ---------------- semana ---------------- */
+const DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const WEEK_ROWS = 9;
+const weekHistory = {stack:[], idx:-1};
+function pushWeekHistory(dataObj, hourLabelsArr){
+  const snap = JSON.stringify({data:dataObj, hourLabels:hourLabelsArr});
+  if(weekHistory.stack[weekHistory.idx]===snap) return;
+  weekHistory.stack = weekHistory.stack.slice(0, weekHistory.idx+1);
+  weekHistory.stack.push(snap);
+  if(weekHistory.stack.length>25) weekHistory.stack.shift();
+  weekHistory.idx = weekHistory.stack.length-1;
+  updateWeekUndoButtons();
+}
+function updateWeekUndoButtons(){
+  document.getElementById('weekUndo').disabled = weekHistory.idx<=0;
+  document.getElementById('weekRedo').disabled = weekHistory.idx>=weekHistory.stack.length-1;
+}
+async function weekGoTo(idx){
+  weekHistory.idx = idx;
+  const snap = JSON.parse(weekHistory.stack[idx]);
+  await saveVal('week_data', snap.data);
+  await saveVal('week_hourlabels', snap.hourLabels);
+  await buildWeek(false);
+  updateWeekUndoButtons();
+}
+async function buildWeek(recordHistory=true){
+  await flushAllPending();
+  const grid = document.getElementById('weekGrid');
+  const data = await loadVal('week_data', {});
+  const hourLabels = await loadVal('week_hourlabels', Array.from({length:WEEK_ROWS},(_,r)=>(7+r)+'h'));
+  grid.innerHTML='';
+  grid.appendChild(el('div','hh','Hora'));
+  DAYS.forEach((d,ci)=>{
+    const head = el('div','hh',d);
+    if(ci===3) head.classList.add('midweek');
+    grid.appendChild(head);
+  });
+  for(let r=0;r<WEEK_ROWS;r++){
+    const isBlockEnd = (r%3===2) && (r!==WEEK_ROWS-1);
+    const lab = document.createElement('div');
+    lab.className='hourlab'+(isBlockEnd?' block-end':'');
+    const labInp = document.createElement('input');
+    labInp.value = hourLabels[r];
+    labInp.style.textAlign='center';
+    labInp.style.fontWeight='700';
+    labInp.addEventListener('input', ()=>{
+      hourLabels[r]=labInp.value;
+      saveDebounced('week_hourlabels', hourLabels);
+      scheduleHistoryPush('week', ()=>pushWeekHistory(data, hourLabels));
+    });
+    labInp.addEventListener('change', ()=>pushWeekHistory(data, hourLabels));
+    lab.appendChild(labInp);
+    grid.appendChild(lab);
+    DAYS.forEach((d,ci)=>{
+      const cell = document.createElement('div');
+      let cls=[];
+      if(ci===3) cls.push('midweek');
+      if(isBlockEnd) cls.push('block-end');
+      cell.className = cls.join(' ');
+      const key = r+'_'+ci;
+      const inp = document.createElement('input');
+      inp.value = data[key]||'';
+      inp.addEventListener('input', ()=>{
+        data[key]=inp.value;
+        saveDebounced('week_data', data);
+        scheduleHistoryPush('week', ()=>pushWeekHistory(data, hourLabels));
+      });
+      inp.addEventListener('change', ()=>pushWeekHistory(data, hourLabels));
+      cell.appendChild(inp);
+      grid.appendChild(cell);
+    });
+  }
+  setupWeekScrollbar();
+  if(recordHistory) pushWeekHistory(data, hourLabels);
+  updateWeekUndoButtons();
+}
+document.getElementById('weekUndo').addEventListener('click', ()=>{ if(weekHistory.idx>0) weekGoTo(weekHistory.idx-1); });
+document.getElementById('weekRedo').addEventListener('click', ()=>{ if(weekHistory.idx<weekHistory.stack.length-1) weekGoTo(weekHistory.idx+1); });
+document.getElementById('weekClear').addEventListener('click', async ()=>{
+  if(!confirm('¿Borrar todo el contenido escrito en la semana? Esta acción se puede deshacer con el botón "Deshacer".')) return;
+  await flushAllPending();
+  await saveVal('week_data', {});
+  await buildWeek();
+});
+function setupWeekScrollbar(){
+  const wrap = document.getElementById('weekWrap');
+  const thumb = document.getElementById('weekScrollThumb');
+  function update(){
+    const ratio = wrap.clientWidth / wrap.scrollWidth;
+    const thumbPct = Math.max(ratio*100, 12);
+    thumb.style.width = thumbPct+'%';
+    const maxScroll = wrap.scrollWidth - wrap.clientWidth;
+    const scrollPct = maxScroll>0 ? (wrap.scrollLeft/maxScroll) : 0;
+    thumb.style.left = (scrollPct*(100-thumbPct))+'%';
+  }
+  wrap.removeEventListener('scroll', wrap._scrollHandler||(()=>{}));
+  wrap._scrollHandler = update;
+  wrap.addEventListener('scroll', update);
+  window.addEventListener('resize', update);
+  update();
+}
+function el(tag,cls,text){
+  const d = document.createElement(tag);
+  if(cls) d.className=cls;
+  if(text!=null) d.textContent=text;
+  return d;
+}
+
+/* ---------------- mes ---------------- */
+let calDate = new Date();
+const MONTHS_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DOW_ES = ['L','M','X','J','V','S','D'];
+const monthHistory = {key:null, stack:[], idx:-1};
+function pushMonthHistory(monthKey, dataObj, notas){
+  if(monthHistory.key !== monthKey){ monthHistory.key = monthKey; monthHistory.stack = []; monthHistory.idx = -1; }
+  const snap = JSON.stringify({data:dataObj, notas});
+  if(monthHistory.stack[monthHistory.idx]===snap) return;
+  monthHistory.stack = monthHistory.stack.slice(0, monthHistory.idx+1);
+  monthHistory.stack.push(snap);
+  if(monthHistory.stack.length>25) monthHistory.stack.shift();
+  monthHistory.idx = monthHistory.stack.length-1;
+  updateMonthUndoButtons();
+}
+function updateMonthUndoButtons(){
+  document.getElementById('monthUndo').disabled = monthHistory.idx<=0;
+  document.getElementById('monthRedo').disabled = monthHistory.idx>=monthHistory.stack.length-1;
+}
+async function monthGoTo(idx){
+  const monthKey = monthHistory.key;
+  monthHistory.idx = idx;
+  const snap = JSON.parse(monthHistory.stack[idx]);
+  await saveVal(monthKey, snap.data);
+  await saveVal('notas_mes_'+monthKey.slice(6), snap.notas);
+  await buildMonth(false);
+  updateMonthUndoButtons();
+}
+let currentMonthKey = null;
+async function buildMonth(recordHistory=true){
+  await flushAllPending();
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  document.getElementById('monthTitle').textContent = MONTHS_ES[m]+' '+y;
+  const monthKey = 'month_'+y+'_'+m;
+  currentMonthKey = monthKey;
+  const data = await loadVal(monthKey, {});
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML='';
+  DOW_ES.forEach(d=>grid.appendChild(el('div','cal-dow',d)));
+  const first = new Date(y,m,1);
+  let startIdx = (first.getDay()+6)%7; // lunes=0
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  for(let i=0;i<startIdx;i++) grid.appendChild(el('div','cal-cell empty'));
+  for(let d=1; d<=daysInMonth; d++){
+    const cell = document.createElement('div');
+    cell.className='cal-cell';
+    const num = el('div','cal-num', d);
+    const ta = document.createElement('textarea');
+    ta.value = data[d]||'';
+    ta.addEventListener('input', ()=>{
+      data[d]=ta.value;
+      saveDebounced(monthKey, data);
+      scheduleHistoryPush('month', ()=>pushMonthHistory(monthKey, data, notasField.value));
+    });
+    ta.addEventListener('change', ()=>pushMonthHistory(monthKey, data, notasField.value));
+    cell.appendChild(num);
+    cell.appendChild(ta);
+    grid.appendChild(cell);
+  }
+  // notas del mes usa su propia clave por mes
+  const notasField = document.getElementById('notasMesField');
+  notasField.dataset.key = 'notas_mes_'+y+'_'+m;
+  const notasVal = await loadVal(notasField.dataset.key, '');
+  notasField.value = notasVal || '';
+  notasField.oninput = ()=>{
+    saveDebounced(notasField.dataset.key, notasField.value);
+    scheduleHistoryPush('month', ()=>pushMonthHistory(monthKey, data, notasField.value));
+  };
+  notasField.onchange = ()=>pushMonthHistory(monthKey, data, notasField.value);
+  if(recordHistory) pushMonthHistory(monthKey, data, notasField.value);
+  updateMonthUndoButtons();
+}
+document.getElementById('monthUndo').addEventListener('click', ()=>{ if(monthHistory.idx>0) monthGoTo(monthHistory.idx-1); });
+document.getElementById('monthRedo').addEventListener('click', ()=>{ if(monthHistory.idx<monthHistory.stack.length-1) monthGoTo(monthHistory.idx+1); });
+document.getElementById('monthClear').addEventListener('click', async ()=>{
+  if(!confirm('¿Borrar todo el contenido escrito este mes (días y notas)? Esta acción se puede deshacer con el botón "Deshacer".')) return;
+  await flushAllPending();
+  await saveVal(currentMonthKey, {});
+  await saveVal('notas_mes_'+currentMonthKey.slice(6), '');
+  await buildMonth();
+});
+document.getElementById('prevMonth').onclick = async ()=>{ await flushAllPending(); calDate.setMonth(calDate.getMonth()-1); buildMonth(); };
+document.getElementById('nextMonth').onclick = async ()=>{ await flushAllPending(); calDate.setMonth(calDate.getMonth()+1); buildMonth(); };
+
+
+/* ---------------- init ---------------- */
+(async function init(){
+  // fecha: cada día tiene su propio registro
+  const today = new Date().toISOString().slice(0,10);
+  currentDate = today;
+  document.getElementById('fecha').value = currentDate;
+  document.getElementById('fecha').addEventListener('input', (e)=>{
+    if(e.target.value) switchToDate(e.target.value);
+  });
+  document.getElementById('prevDay').addEventListener('click', ()=>shiftDate(-1));
+  document.getElementById('nextDay').addEventListener('click', ()=>shiftDate(1));
+
+  bindDailyFields(document.getElementById('page-hoy'));
+  bindAllFields(document.getElementById('page-fin'));
+
+  await buildMoodRow(document.querySelector('.moods[data-group="ayer"]'), 'ayer');
+  await buildMoodRow(document.querySelector('.moods[data-group="empiezo"]'), 'empiezo');
+  await buildMoodRow(document.querySelector('.moods[data-group="termino"]'), 'termino');
+
+  await buildChecklist();
+  await buildRecentDaysChips();
+  await buildFinRows();
+  await buildExtras();
+  await buildWeek();
+  await buildMonth();
+  setupConnectButtons();
+  setupPdfButton();
+})();
+
+/* ---------------- descargar como PDF (imprimir la página del día) ---------------- */
+function setupPdfButton(){
+  const modal = document.getElementById('pdfModal');
+  function openModal(){ modal.classList.add('show'); }
+  function closeModal(){ modal.classList.remove('show'); }
+
+  document.getElementById('btnPdf').addEventListener('click', openModal);
+  document.getElementById('btnPdf2').addEventListener('click', openModal);
+  document.getElementById('pdfCancel').addEventListener('click', closeModal);
+
+  document.getElementById('pdfConfirm').addEventListener('click', ()=>{
+    const checked = Array.from(modal.querySelectorAll('input[type=checkbox]:checked')).map(c=>c.value);
+    if(checked.length===0){ alert('Elegí al menos una sección.'); return; }
+    closeModal();
+
+    const prevTitle = document.title;
+    document.title = 'MÜDI '+currentDate;
+    document.getElementById('printDateLabel').textContent = 'Mi MÜDI · '+currentDate;
+
+    const allPages = ['hoy','fin','sem','mes'];
+    allPages.forEach(p=>{
+      document.getElementById('page-'+p).classList.toggle('print-show', checked.includes(p));
+    });
+
+    try{ window.print(); }
+    catch(e){
+      alert('Este navegador no permite imprimir/descargar en PDF desde aquí. Abrí el archivo directamente en Chrome o Safari (no dentro de la vista previa de Claude) e intentá de nuevo.');
+    }
+    setTimeout(()=>{
+      document.title = prevTitle;
+      allPages.forEach(p=>document.getElementById('page-'+p).classList.remove('print-show'));
+    }, 500);
+  });
+}
+
+/* ---------------- conectar con otras apps ---------------- */
+function setupConnectButtons(){
+  function pad(n){ return n<10 ? '0'+n : ''+n; }
+  function getSummary(){
+    const fecha = document.getElementById('fecha').value || new Date().toISOString().slice(0,10);
+    const ayer = document.querySelector('[data-key="ayer_txt"]').value.trim();
+    const empiezo = document.querySelector('[data-key="empiezo_txt"]').value.trim();
+    const termino = document.querySelector('[data-key="termino_txt"]').value.trim();
+    let parts = [];
+    if(empiezo) parts.push('Hoy empiezo: '+empiezo);
+    if(termino) parts.push('Hoy terminé: '+termino);
+    if(ayer) parts.push('Ayer: '+ayer);
+    return {fecha, texto: parts.join('\n') || 'Entrada de MÜDI'};
+  }
+  document.getElementById('btnCalendar').addEventListener('click', ()=>{
+    const {fecha, texto} = getSummary();
+    const ymd = fecha.replace(/-/g,'');
+    const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+      + '&text=' + encodeURIComponent('MÜDI · '+fecha)
+      + '&dates=' + ymd + '/' + ymd
+      + '&details=' + encodeURIComponent(texto);
+    window.open(url, '_blank');
+  });
+  document.getElementById('btnMaps').addEventListener('click', ()=>{
+    window.open('https://www.google.com/maps', '_blank');
+  });
+  document.getElementById('btnShare').addEventListener('click', async ()=>{
+    const {fecha, texto} = getSummary();
+    const shareData = {title:'MÜDI · '+fecha, text:texto};
+    if(navigator.share){
+      try{ await navigator.share(shareData); }catch(e){}
+    } else {
+      try{
+        await navigator.clipboard.writeText(texto);
+        alert('Copiado. Pegalo en la app que quieras.');
+      }catch(e){ alert(texto); }
+    }
+  });
+}
+</script>
+</body>
+</html>

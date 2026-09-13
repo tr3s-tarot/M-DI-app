@@ -1,0 +1,14 @@
+{
+  "name": "MÜDI - Organizador Emocional",
+  "short_name": "MÜDI",
+  "description": "Tu organizador emocional, financiero y de horarios diario",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fbf7ee",
+  "theme_color": "#fbf7ee",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
