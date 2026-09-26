@@ -122,6 +122,17 @@
   .tile .remove{position:absolute;top:5px;right:5px;background:rgba(59,58,51,0.65);color:#fff;
     border-radius:50%;width:20px;height:20px;font-size:12px;display:flex;align-items:center;justify-content:center;}
 
+  .audio-btn{width:100%;margin-top:10px;border:1px solid rgba(59,58,51,0.15);background:rgba(255,255,255,0.55);
+    border-radius:12px;padding:10px;font-family:inherit;font-size:13px;font-weight:700;color:var(--ink);
+    display:flex;align-items:center;justify-content:center;gap:8px;}
+  .audio-btn.recording{background:#a8453a;color:#fff;border-color:#a8453a;}
+  .audio-player-row{display:flex;align-items:center;gap:8px;margin-top:10px;background:rgba(255,255,255,0.55);
+    border-radius:12px;padding:8px 10px;}
+  .audio-player-row audio{flex:1;height:32px;}
+  .audio-player-row .remove-audio{flex:none;font-size:11px;font-weight:700;color:#a8453a;padding:6px 8px;}
+  .rec-dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:recpulse 1s infinite;}
+  @keyframes recpulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
   /* semana */
   .week-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px;}
   .week-wrap::-webkit-scrollbar{height:7px;}
@@ -170,14 +181,14 @@
 
   .hint{font-size:11.5px;color:var(--muted);line-height:1.5;margin:4px 4px 14px;}
 
-  .tracker-row{display:flex;gap:10px;margin-top:8px;}
-  .tracker-tile{flex:1;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.55);
-    border-radius:12px;padding:6px 10px;min-width:0;}
-  .tracker-icon{position:relative;width:22px;height:22px;flex:none;}
+  .tracker-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .tracker-tile{flex:1 1 100px;display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.55);
+    border-radius:12px;padding:6px 8px;min-width:100px;}
+  .tracker-icon{position:relative;width:20px;height:20px;flex:none;}
   .tracker-icon svg{position:absolute;top:0;left:0;width:100%;height:100%;}
-  .tracker-label{font-size:11.5px;color:var(--muted);font-weight:600;flex:none;white-space:nowrap;}
+  .tracker-label{font-size:10.5px;color:var(--muted);font-weight:600;flex:none;white-space:nowrap;}
   .tracker-input{flex:1;min-width:0;width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--line);
-    background:transparent;font-family:inherit;font-weight:700;font-size:13px;outline:none;padding:2px 4px;}
+    background:transparent;font-family:inherit;font-weight:700;font-size:12px;outline:none;padding:2px 2px;}
 
   .connect-row{display:flex;flex-direction:column;gap:8px;}
   .connect-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
@@ -251,6 +262,7 @@
     .week-grid input{font-size:9px !important;}
     .week-grid .hh{font-size:9px !important;padding:4px 2px !important;}
     .tile .plus{display:none !important;}
+    .audio-btn, .audio-player-row{display:none !important;}
     .tile{border-style:solid !important;}
   }
 </style>
@@ -327,6 +339,13 @@
           <span class="tracker-label">Tomé:</span>
           <input class="tracker-input" style="color:#3f6fa0;" type="text" maxlength="6" data-key="tome_ayer">
         </div>
+        <div class="tracker-tile">
+          <div class="tracker-icon">
+            <svg viewBox="0 0 24 24"><path d="M8,2 V10 M11,2 V10 M14,2 V10 M17,2 V10 M8,10 L12.5,13.5 M17,10 L12.5,13.5 M12.5,13.5 V22" stroke="#6f8f5b" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="tracker-label">Comí:</span>
+          <input class="tracker-input" style="color:#6f8f5b;" type="text" maxlength="10" data-key="comi_ayer">
+        </div>
       </div>
     </div>
 
@@ -349,6 +368,13 @@
           </div>
           <span class="tracker-label">Tomé:</span>
           <input class="tracker-input" style="color:#3f6fa0;" type="text" maxlength="6" data-key="tome_empiezo">
+        </div>
+        <div class="tracker-tile">
+          <div class="tracker-icon">
+            <svg viewBox="0 0 24 24"><path d="M8,2 V10 M11,2 V10 M14,2 V10 M17,2 V10 M8,10 L12.5,13.5 M17,10 L12.5,13.5 M12.5,13.5 V22" stroke="#6f8f5b" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="tracker-label">Comí:</span>
+          <input class="tracker-input" style="color:#6f8f5b;" type="text" maxlength="10" data-key="comi_empiezo">
         </div>
       </div>
     </div>
@@ -413,6 +439,7 @@
       <div class="card-head"><span class="card-title">Extras</span></div>
       <p class="hint" style="margin:0 0 4px;">Toca un recuadro para agregar una foto.</p>
       <div class="extras-grid" id="extrasGrid"></div>
+      <div id="audioNoteWrap"></div>
     </div>
   </div>
 
@@ -957,7 +984,80 @@ async function buildExtras(){
     });
     grid.appendChild(tile);
   }
+  await buildAudioNote();
 }
+
+/* ---------------- nota de audio ---------------- */
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordStartTime = null;
+let recordTimerInterval = null;
+const AUDIO_MAX_SECONDS = 90;
+
+async function buildAudioNote(){
+  const wrap = document.getElementById('audioNoteWrap');
+  const audioData = await loadVal('extra_audio', null);
+  wrap.innerHTML = '';
+  if(audioData){
+    const row = document.createElement('div');
+    row.className = 'audio-player-row';
+    row.innerHTML = `<audio controls src="${audioData}"></audio><button class="remove-audio">🗑 Borrar</button>`;
+    row.querySelector('.remove-audio').addEventListener('click', async ()=>{
+      if(!confirm('¿Borrar la nota de audio?')) return;
+      await saveVal('extra_audio', null);
+      buildAudioNote();
+    });
+    wrap.appendChild(row);
+  } else {
+    const btn = document.createElement('button');
+    btn.className = 'audio-btn';
+    btn.id = 'recordBtn';
+    btn.innerHTML = '🎤 Agregar nota de audio';
+    btn.addEventListener('click', toggleRecording);
+    wrap.appendChild(btn);
+  }
+}
+
+async function toggleRecording(){
+  const btn = document.getElementById('recordBtn');
+  if(mediaRecorder && mediaRecorder.state==='recording'){
+    mediaRecorder.stop();
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    alert('Este navegador no permite grabar audio, o no se le dio permiso al micrófono. Probá abriendo la página directamente en Chrome o Safari (no dentro de la vista previa de Claude).');
+    return;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (e)=>{ if(e.data.size>0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = async ()=>{
+      clearInterval(recordTimerInterval);
+      stream.getTracks().forEach(t=>t.stop());
+      const blob = new Blob(recordedChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        await saveVal('extra_audio', reader.result);
+        buildAudioNote();
+      };
+      reader.readAsDataURL(blob);
+    };
+    mediaRecorder.start();
+    recordStartTime = Date.now();
+    btn.classList.add('recording');
+    btn.innerHTML = '<span class="rec-dot"></span> Grabando… toca para detener (0s)';
+    recordTimerInterval = setInterval(()=>{
+      const secs = Math.floor((Date.now()-recordStartTime)/1000);
+      btn.innerHTML = `<span class="rec-dot"></span> Grabando… toca para detener (${secs}s)`;
+      if(secs >= AUDIO_MAX_SECONDS) mediaRecorder.stop();
+    }, 500);
+  }catch(e){
+    alert('No se pudo acceder al micrófono. Revisá los permisos del navegador para este sitio.');
+  }
+}
+
 document.getElementById('fileInput').addEventListener('change', (e)=>{
   const file = e.target.files[0];
   if(!file || activeTileIndex===null) return;
